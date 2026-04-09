@@ -10,13 +10,17 @@ class Post(BaseModel):
     content: str 
     published : bool =True
     rating: Optional[float]=None
+
+my_posts=[{'title':'title of post 1', 'content':'content of post 1', 'id':1},{'title':'My favourtie food','content':'I love biryani','id':2}]
+
+
 @app.get("/")
 def read_root():                    # Async is used only when we have to do some I/O operations like database calls, file handling, etc. It is not necessary to use async if we are just returning a simple response.
     return {"Hello": "World"}               # In normal function , we can just use def instead of async def.
  
 @app.get("/posts")
 def get_posts():
-    return {"data":"This is your list of posts"}
+    return {"data":my_posts}
 
 @app.post("/createposts")
 def create_posts(NewPost: Post):

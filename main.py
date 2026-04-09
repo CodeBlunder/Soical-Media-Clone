@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.params import Body # Body is used to define the request body for a POST or PUT request. It allows us to specify the expected structure of the data that will be sent in the request body.
 from pydantic import BaseModel
 from typing import Optional
+from random import randrange
 app=FastAPI()
 class Post(BaseModel):
     title: str
@@ -24,7 +25,10 @@ def get_posts():
 
 @app.post("/createposts")
 def create_posts(NewPost: Post):
-    print(NewPost)
+  #  print(NewPost.model_dump()) # Model_dump() is a method provided by Pydantic's BaseModel that allows you to convert a Pydantic model instance into a dictionary. It is used to serialize the model's data into a format that can be easily manipulated or returned as a response in an API.
+    post_dict=NewPost.model_dump()
+    post_dict['id']=randrange(0,1000000)
+    my_posts.append(post_dict)
     return {"data":"New post created Successfully"} 
 
 

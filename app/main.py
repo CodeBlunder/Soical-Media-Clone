@@ -78,6 +78,20 @@ def delete_post(id: int):
     index=find_index_post(id)
     if index==None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found")
-    
+     
     my_posts.pop(index)
     return Response(status_code=status.HTTP_204_NO_CONTENT) # Basically here while deleting we don't want to return any content in the response.     
+
+
+
+# Updating the post
+@app.put("/posts/{id}")
+def update_post(id:int, post:Post):
+    index=find_index_post(id)
+    if index==None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found") 
+    post_dict=post.model_dump()
+    post_dict['id']=id #we are assigning the same id to the updated post, so that it can replace the existing post with the same id
+    my_posts[index]=post_dict # Here, we are updating the post at the specified index in the my_posts list with the new post data. The post_dict is a dictionary representation of the updated post, and we are assigning it to the index in the my_posts list that corresponds to the post being updated.    
+
+    return {"message":f"Post with id {id} was updated successfully", "data":post_dict}

@@ -80,7 +80,9 @@ def rating_post(rating: Post):
 # Next endpoint for retrieving a specific post by its ID
 @app.get("/posts/{id}")
 def get_post(id: int, response: Response):
-    post=find_post(id)
+    cursor.execute("""SELECT * FROM posts WHERE id = %s """,(str(id)))
+    post=cursor.fetchone()
+ 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found")
      
@@ -94,11 +96,14 @@ def get_post(id: int, response: Response):
 
 @app.delete("/posts/{id}")
 def delete_post(id: int):
-    index=find_index_post(id)
-    if index==None:
+    cursor.execute("""DELETE FROM posts WHERE id=%s returning * """,(str(id),)) # we are using , after id bcos to make the execution smoother!!
+    deleted_post=cursor.fetchone()
+    conn.commit()
+
+    
+    if delete_post==None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found")
-     
-    my_posts.pop(index)
+    
     return Response(status_code=status.HTTP_204_NO_CONTENT) # Basically here while deleting we don't want to return any content in the response.     
 
 
@@ -106,14 +111,17 @@ def delete_post(id: int):
 # Updating the post
 @app.put("/posts/{id}")
 def update_post(id:int, post:Post):
-    index=find_index_post(id)
-    if index==None:
+    cursor.execute("""UPDATE posts SET title= %s, content=%s, published=%s WHERE id = %s RETURNING *""",(post.title,post.content,post.published,id))
+    updated_post=cursor.fetchone()
+    conn.commit()
+    
+    if updated_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found") 
-    post_dict=post.model_dump()
-    post_dict['id']=id #we are assigning the same id to the updated post, so that it can replace the existing post with the same id
-    my_posts[index]=post_dict # Here, we are updating the post at the specified index in the my_posts list with the new post data. The post_dict is a dictionary representation of the updated post, and we are assigning it to the index in the my_posts list that corresponds to the post being updated.    
+   # post_dict=post.model_dump()
+    #post_dict['id']=id #we are assigning the same id to the updated post, so that it can replace the existing post with the same id
+   # my_posts[index]=post_dict # Here, we are updating the post at the specified index in the my_posts list with the new post data. The post_dict is a dictionary representation of the updated post, and we are assigning it to the index in the my_posts list that corresponds to the post being updated.    
 
-    return {"message":f"Post with id {id} was updated successfully", "data":post_dict}
+    return {"data":updated_post} 
 
 
 # As we know fast api has swagger UI which is automatically generated based on the endpoints we have defined in our code. We can access the swagger UI by going to http://localhost:8000/docs in our browser. This will show us a user-friendly interface where we can test our API endpoints, see the request and response formats, and interact with our API without needing to use tools like Postman or curl.

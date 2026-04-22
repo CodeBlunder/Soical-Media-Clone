@@ -10,12 +10,21 @@ from typing import Optional
 from random import randrange
 import time
 from . import models
-from .database import Engine  # . refers to the current directory
+from .database import Engine, SessionLocal # . refers to the current directory
 
 
 models.Base.metadata.create_all(bind=Engine) # This is used to create the tables in the database. It will create all the tables that are defined in the models.py file. We will use this line of code to create the tables in the database when we run the application for the first time. After that, we can comment it out or remove it from the code.
 
 app=FastAPI()
+
+# Dependency , it refers to the database session
+def get_db():
+    db=SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 class Post(BaseModel):
     title: str
     content: str 

@@ -35,13 +35,13 @@ my_posts=[{'title':'title of post 1', 'content':'content of post 1', 'id':1},{'t
 def read_root():                    # Async is used only when we have to do some I/O operations like database calls, file handling, etc. It is not necessary to use async if we are just returning a simple response.
     return {"Hello": "World"}               # In normal function , we can just use def instead of async def.
  
-@app.get("/sqlalchemy")
+"""@app.get("/sqlalchemy")
 def test_db(db: Session = Depends(get_db)):
     # Basically query is handling the sql queries
     posts=db.query(models.Post).all() # this line refers where query that gets the model.post it means table then we want all the post so will take .all()  
     print(posts)
     return {"status":'successful'}
-
+"""
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts """)
@@ -51,7 +51,7 @@ def get_posts(db: Session = Depends(get_db)):
     return {"data":posts}
 
 @app.post("/createposts")
-def create_posts(post: schemas.Post,db: Session = Depends(get_db)):
+def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db)):
   #  print(NewPost.model_dump()) # Model_dump() is a method provided by Pydantic's BaseModel that allows you to convert a Pydantic model instance into a dictionary. It is used to serialize the model's data into a format that can be easily manipulated or returned as a response in an API.
     # cursor.execute("""INSERT INTO posts(title,content,published) VALUES(%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
     ## post_dict=NewPost.model_dump()

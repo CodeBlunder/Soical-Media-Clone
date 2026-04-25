@@ -1,7 +1,8 @@
 # Building Social Media Clone API with FastAPI
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from schemas import Post
+from typing import List
+
 from fastapi import FastAPI, status, HTTPException, Depends 
 from fastapi.responses import Response
 from fastapi.params import Body # Body is used to define the request body for a POST or PUT request. It allows us to specify the expected structure of the data that will be sent in the request body.
@@ -9,7 +10,7 @@ from fastapi.params import Body # Body is used to define the request body for a 
 from typing import Optional
 from random import randrange
 import time
-from app import models, schemas
+from app import models, schemas 
 from .database import Engine, get_db # . refers to the current directory
 from sqlalchemy.orm import Session
 
@@ -42,16 +43,16 @@ def test_db(db: Session = Depends(get_db)):
     print(posts)
     return {"status":'successful'}
 """
-@app.get("/posts")
+@app.get("/posts",response_model=List[schemas.Post] )
 def get_posts(db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts """)
     # posts=cursor.fetchall()
     # print(posts)  
     posts=db.query(models.Post).all()
-    return {"data":posts}
+    return posts
 
 @app.post("/createposts")
-def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db)):
+def create_posts(post: schemas.PostCreate,db: Session = Depends( get_db)): # Here, we are defining the request body for the create_posts endpoint. The post parameter is of type schemas.PostCreate, which is a Pydantic model that defines the expected structure of the data that will be sent in the request body when creating a new post. By using this model, we can ensure that the data sent in the request body is valid and conforms to the expected format for creating a new post.
   #  print(NewPost.model_dump()) # Model_dump() is a method provided by Pydantic's BaseModel that allows you to convert a Pydantic model instance into a dictionary. It is used to serialize the model's data into a format that can be easily manipulated or returned as a response in an API.
     # cursor.execute("""INSERT INTO posts(title,content,published) VALUES(%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
     ## post_dict=NewPost.model_dump()
@@ -68,7 +69,7 @@ def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db)):
     db.refresh(new_post) # This is used to refresh the new_post object with the data
 
 
-    return {"data":new_post}
+    return new_post
 
 
 
@@ -86,19 +87,19 @@ def find_index_post(id):
 
 
 @app.post("/publishedpost")
-def published_post(published: Post):
+def published_post(published: schemas.PostCreate):
     print(published)
     return {"data":"Post published Successfully"}
 
 @app.post("/ratingpost")
-def rating_post(rating: Post):
+def rating_post(rating: schemas.PostCreate):
     print(rating)
     return {"data":"Post rated Successfully"}
 
 
 
 # Next endpoint for retrieving a specific post by its ID
-@app.get("/posts/{id}")
+@app.get("/posts/{id}",response_model=schemas.Post)
 def get_post(id: int,db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s """,(str(id)))
     # post=cursor.fetchone()
@@ -111,7 +112,7 @@ def get_post(id: int,db: Session = Depends(get_db)):
      
         # response.status_code=status.HTTP_404_NOT_FOUND
         # return {"message":f"Post with id {id} was not found"}
-    return {"post_detail":post}
+    return post
 
 
 # Note 
@@ -134,8 +135,9 @@ def delete_post(id: int,db: Session = Depends(get_db)):
 
 
 # Updating the post
-@app.put("/posts/{id}")
-def update_post(id:int,post:schemas.Post,db: Session = Depends(get_db)):
+@app.put("/posts/{id}",response_model=schemas.Post)
+
+def update_post(id:int,post:schemas.PostCreate,db: Session = Depends(get_db)):
     # cursor.execute("""UPDATE posts SET title= %s, content=%s, published=%s WHERE id = %s RETURNING *""",(post.title,post.content,post.published,id))
     # updated_post=cursor.fetchone()
     # conn.commit()
@@ -151,11 +153,17 @@ def update_post(id:int,post:schemas.Post,db: Session = Depends(get_db)):
     db.commit()
     post_to_update=db.query(models.Post).filter(models.Post.id==id) # This line is used to retrieve the post that we just updated from the database. We need to do this because after the update operation, we want to return the updated post in the response. By querying the database again, we can ensure that we are returning the most up-to-date version of the post, which includes any changes that were made during the update operation. If there is no post with the specified id, then post_to_update will be None, and we can handle that case accordingly.
     
-    return {"data":post_to_update.first()} 
+    return post_to_update.first() 
 
 
 # As we know fast api has swagger UI which is automatically generated based on the endpoints we have defined in our code. We can access the swagger UI by going to http://localhost:8000/docs in our browser. This will show us a user-friendly interface where we can test our API endpoints, see the request and response formats, and interact with our API without needing to use tools like Postman or curl.
 # One more is redoc which is also automatically generated by fastapi and can be accessed at http://localhost:8000/redoc. It provides a different style of documentation for our API, with a more detailed and structured layout compared to the swagger UI. Both of these documentation interfaces are very useful for testing and understanding our API endpoints.
 
 
-
+@app.post("/users",status_code=status.HTTP_201_CREATED,response_model=schemas.UserOut)
+def create_user(user:schemas.UserCreate,db: Session = Depends(get_db)):
+    new_user=models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user

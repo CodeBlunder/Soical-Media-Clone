@@ -10,9 +10,13 @@ from fastapi.params import Body # Body is used to define the request body for a 
 from typing import Optional
 from random import randrange
 import time
-from app import models, schemas 
+from . import models, schemas
+from .utils import hash_pass
 from .database import Engine, get_db # . refers to the current directory
 from sqlalchemy.orm import Session
+
+
+
 
 models.Base.metadata.create_all(bind=Engine) # This is used to create the tables in the database. It will create all the tables that are defined in the models.py file. We will use this line of code to create the tables in the database when we run the application for the first time. After that, we can comment it out or remove it from the code.
 
@@ -162,8 +166,13 @@ def update_post(id:int,post:schemas.PostCreate,db: Session = Depends(get_db)):
 
 @app.post("/users",status_code=status.HTTP_201_CREATED,response_model=schemas.UserOut)
 def create_user(user:schemas.UserCreate,db: Session = Depends(get_db)):
+    # Before creating a new user, we need to hash the password. we will be using password_hash to hash the password
+    hashed_pass=hash_pass(user.password)
+    user.password=hashed_pass
+
+    
     new_user=models.User(**user.dict())
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+    return new_user 

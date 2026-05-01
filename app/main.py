@@ -16,18 +16,16 @@ from .database import Engine, get_db # . refers to the current directory
 from sqlalchemy.orm import Session
 
 from . routers import post,user
-
+from . routers import auth
 
 
 
 app=FastAPI()
 
 
-
-app.include_router(post.router) # 
+app.include_router(post.router) # This line is used to include the post router in the main application. The post router contains all the endpoints related to posts, and by including it in the main application, we can access those endpoints when we run the application. This helps us to organize our code better and keep the main.py file clean. We can define all the post related endpoints in the post.py file and then include this router in the main.py file.
 app.include_router(user.router)
-
-
+app.include_router(auth.router)
 
 models.Base.metadata.create_all(bind=Engine) # This is used to create the tables in the database. It will create all the tables that are defined in the models.py file. We will use this line of code to create the tables in the database when we run the application for the first time. After that, we can comment it out or remove it from the code.
 

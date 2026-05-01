@@ -7,12 +7,15 @@ from typing import List
 
 # Now almost all the errors are handled
 # Right now the only error i.e we don't have the access to the app object so we are gonna use ROUTERS
-router=APIRouter()
+router=APIRouter(
+    prefix="/posts", # This is used to add a prefix to all the endpoints defined in this router. It means that all the endpoints defined in this router will have the prefix /posts. For example, if we define an endpoint /create in this router, then the actual endpoint will be /posts/create. This helps us to organize our code better and keep the main.py file clean. We can define all the post related endpoints in this file and then include this router in the main.py file.
+    tags=["Posts"]
+)
 # We are using APIRouter to create a router for the post endpoints. This allows us to organize our code better and keep the main.py file clean. We can define all the post related endpoints in this file and then include this router in the main.py file.
 # we will replace the app object with router object in all the endpoints defined in this file. This will allow us to use the router to define the endpoints and then include this router in the main.py file.
 
 
-@router.get("/posts",response_model=List[schemas.Post] )
+@router.get("/",response_model=List[schemas.Post] )
 def get_posts(db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts """)
     # posts=cursor.fetchall()
@@ -20,7 +23,7 @@ def get_posts(db: Session = Depends(get_db)):
     posts=db.query(models.Post).all()
     return posts
 
-@router.post("/createposts")
+@router.post("/")
 def create_posts(post: schemas.PostCreate,db: Session = Depends( get_db)): # Here, we are defining the request body for the create_posts endpoint. The post parameter is of type schemas.PostCreate, which is a Pydantic model that defines the expected structure of the data that will be sent in the request body when creating a new post. By using this model, we can ensure that the data sent in the request body is valid and conforms to the expected format for creating a new post.
   #  print(NewPost.model_dump()) # Model_dump() is a method provided by Pydantic's BaseModel that allows you to convert a Pydantic model instance into a dictionary. It is used to serialize the model's data into a format that can be easily manipulated or returned as a response in an API.
     # cursor.execute("""INSERT INTO posts(title,content,published) VALUES(%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
@@ -56,7 +59,7 @@ def rating_post(rating: schemas.PostCreate):
 
 
 # Next endpoint for retrieving a specific post by its ID
-@router.get("/posts/{id}",response_model=schemas.Post)
+@router.get("/{id}",response_model=schemas.Post)
 def get_post(id: int,db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s """,(str(id)))
     # post=cursor.fetchone()
@@ -75,7 +78,7 @@ def get_post(id: int,db: Session = Depends(get_db)):
 # Note 
 # Anytime we have path parameter , its always going to return a string by default, we have to manually convert it to the type 
 
-@router.delete("/posts/{id}")
+@router.delete("/{id}")
 def delete_post(id: int,db: Session = Depends(get_db)):
     # cursor.execute("""DELETE FROM posts WHERE id=%s returning * """,(str(id),)) # we are using , after id bcos to make the execution smoother!!
     # deleted_post=cursor.fetchone()
@@ -92,7 +95,7 @@ def delete_post(id: int,db: Session = Depends(get_db)):
 
 
 # Updating the post
-@router.put("/posts/{id}",response_model=schemas.Post)
+@router.put("/{id}",response_model=schemas.Post)
 
 def update_post(id:int,post:schemas.PostCreate,db: Session = Depends(get_db)):
     # cursor.execute("""UPDATE posts SET title= %s, content=%s, published=%s WHERE id = %s RETURNING *""",(post.title,post.content,post.published,id))

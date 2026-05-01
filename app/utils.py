@@ -4,3 +4,8 @@ password_hash=PasswordHash.recommended()# This line is used to create a password
 
 def hash_pass(password: str):
     return password_hash.hash(password)
+
+
+def verify_pass(plain_password, hashed_password):
+    return password_hash.verify(plain_password,hashed_password)
+

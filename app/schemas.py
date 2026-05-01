@@ -53,3 +53,7 @@ class UserOut(BaseModel):
         form_attributes=True
 
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    

@@ -16,7 +16,7 @@ router=APIRouter(
 
 
 @router.get("/",response_model=List[schemas.Post] )
-def get_posts(db: Session = Depends(get_db),user_id:int=Depends(oauth2.get_current_user)):
+def get_posts(db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user)):
     # cursor.execute("""SELECT * FROM posts """)
     # posts=cursor.fetchall()
     # print(posts)  
@@ -24,7 +24,7 @@ def get_posts(db: Session = Depends(get_db),user_id:int=Depends(oauth2.get_curre
     return posts
 
 @router.post("/")
-def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db),user_id:int=Depends(oauth2.get_current_user)): # Here, we are defining the request body for the create_posts endpoint. The post parameter is of type schemas.PostCreate, which is a Pydantic model that defines the expected structure of the data that will be sent in the request body when creating a new post. By using this model, we can ensure that the data sent in the request body is valid and conforms to the expected format for creating a new post.
+def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user)): # Here, we are defining the request body for the create_posts endpoint. The post parameter is of type schemas.PostCreate, which is a Pydantic model that defines the expected structure of the data that will be sent in the request body when creating a new post. By using this model, we can ensure that the data sent in the request body is valid and conforms to the expected format for creating a new post.
   #  print(NewPost.model_dump()) # Model_dump() is a method provided by Pydantic's BaseModel that allows you to convert a Pydantic model instance into a dictionary. It is used to serialize the model's data into a format that can be easily manipulated or returned as a response in an API.
     # cursor.execute("""INSERT INTO posts(title,content,published) VALUES(%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
     ## post_dict=NewPost.model_dump()
@@ -35,7 +35,7 @@ def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db),user_id:
     # print(**post.dict()) # The ** operator is used to unpack the dictionary returned by post.dict() and pass its key-value pairs as keyword arguments to the Post constructor. This allows us to create a new Post object with the attributes defined in the Post model, using the data provided in the request body.
     # new_post=models.Post(title=post.title, content=post.content, published=post.published)
     # Insteading of writing the above line we can also write it in a more concise way using the ** operator as shown below:
-    print(user_id)
+    print(current_user.email)
     new_post=models.Post(**post.dict())
     db.add(new_post)
     db.commit()
@@ -61,7 +61,7 @@ def rating_post(rating: schemas.PostCreate):
 
 # Next endpoint for retrieving a specific post by its ID
 @router.get("/{id}",response_model=schemas.Post)
-def get_post(id: int,db: Session = Depends(get_db),user_id:int=Depends(oauth2.get_current_user)):
+def get_post(id: int,db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s """,(str(id)))
     # post=cursor.fetchone()
     post=db.query(models.Post).filter(models.Post.id==id).first() # this line is used to retrieve a specific post from the database based on its ID. The filter() method is used to specify the condition for filtering the posts, in this case, we are filtering the posts where the id column matches the provided id parameter. The first() method is used to retrieve the first result that matches the filter condition
@@ -80,7 +80,7 @@ def get_post(id: int,db: Session = Depends(get_db),user_id:int=Depends(oauth2.ge
 # Anytime we have path parameter , its always going to return a string by default, we have to manually convert it to the type 
 
 @router.delete("/{id}")
-def delete_post(id: int,db: Session = Depends(get_db),user_id:int=Depends(oauth2.get_current_user)):
+def delete_post(id: int,db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user)):
     # cursor.execute("""DELETE FROM posts WHERE id=%s returning * """,(str(id),)) # we are using , after id bcos to make the execution smoother!!
     # deleted_post=cursor.fetchone()
     # conn.commit()
@@ -98,7 +98,7 @@ def delete_post(id: int,db: Session = Depends(get_db),user_id:int=Depends(oauth2
 # Updating the post
 @router.put("/{id}",response_model=schemas.Post)
 
-def update_post(id:int,post:schemas.PostCreate,db: Session = Depends(get_db),user_id:int=Depends(oauth2.get_current_user)):
+def update_post(id:int,post:schemas.PostCreate,db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user)):
     # cursor.execute("""UPDATE posts SET title= %s, content=%s, published=%s WHERE id = %s RETURNING *""",(post.title,post.content,post.published,id))
     # updated_post=cursor.fetchone()
     # conn.commit()

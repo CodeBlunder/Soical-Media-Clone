@@ -36,7 +36,7 @@ def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db),current_
     # new_post=models.Post(title=post.title, content=post.content, published=post.published)
     # Insteading of writing the above line we can also write it in a more concise way using the ** operator as shown below:
     print(current_user.email)
-    new_post=models.Post(**post.dict())
+    new_post=models.Post(**post.dict(),user_id=current_user.id)
     db.add(new_post)
     db.commit()
     db.refresh(new_post) # This is used to refresh the new_post object with the data
@@ -70,10 +70,15 @@ def get_post(id: int,db: Session = Depends(get_db),current_user:int=Depends(oaut
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found")
-     
+    return post
+"""
+    if post.user_id != current_user.id:                                                      # This condition ensures that only the authorize person get his /her posts!
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Not Authorized to perform the requested action") 
+"""  
+
         # response.status_code=status.HTTP_404_NOT_FOUND
         # return {"message":f"Post with id {id} was not found"}
-    return post
+  
 
 
 # Note 
@@ -84,12 +89,17 @@ def delete_post(id: int,db: Session = Depends(get_db),current_user:int=Depends(o
     # cursor.execute("""DELETE FROM posts WHERE id=%s returning * """,(str(id),)) # we are using , after id bcos to make the execution smoother!!
     # deleted_post=cursor.fetchone()
     # conn.commit()
-    post=db.query(models.Post).filter(models.Post.id==id)
+    post_query=db.query(models.Post).filter(models.Post.id==id)
     
-    if post.first()==None:
+    post=post_query.first()
+
+    if post==None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found")
     
-    post.delete(synchronize_session=False) # synchronize_session is used to synchronize the session with the database after deleting the post. It is set to False to avoid unnecessary overhead of synchronizing the session when we are only deleting a single post. If we were deleting multiple posts, we would set it to True to ensure that the session is properly synchronized with the database after the delete operation.
+    if post.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Not Authorized to perform the requested action")
+    
+    post_query.delete(synchronize_session=False) # synchronize_session is used to synchronize the session with the database after deleting the post. It is set to False to avoid unnecessary overhead of synchronizing the session when we are only deleting a single post. If we were deleting multiple posts, we would set it to True to ensure that the session is properly synchronized with the database after the delete operation.
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT) # Basically here while deleting we don't want to return any content in the response.     
 
@@ -107,6 +117,10 @@ def update_post(id:int,post:schemas.PostCreate,db: Session = Depends(get_db),cur
     
     if updated_post==0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found") 
+    
+    if post.user_id != current_user.id:                                                      # This condition ensures that only the authorize person can update the posts
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Not Authorized to perform the requested action") 
+    
     ## post_to_update.update(post.dict(),synchronize_session=False) # Here, we are updating the post in the database with the new data provided in the request body. The post.dict() method is used to convert the Pydantic model instance into a dictionary format that can be used for updating the database record. The synchronize_session=False parameter is used to avoid unnecessary overhead of synchronizing the session when we are only updating a single post. If we were updating multiple posts, we would set it to True to ensure that the session is properly synchronized with the database after the update operation.
    # post_dict=post.model_dump()
     #post_dict['id']=id #we are assigning the same id to the updated post, so that it can replace the existing post with the same id

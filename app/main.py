@@ -1,23 +1,19 @@
 # Building Social Media Clone API with FastAPI
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from typing import List
-
-from fastapi import FastAPI, status, HTTPException, Depends 
-from fastapi.responses import Response
-from fastapi.params import Body # Body is used to define the request body for a POST or PUT request. It allows us to specify the expected structure of the data that will be sent in the request body.
-
+from fastapi import FastAPI
+# from fastapi.responses import Response
+# from fastapi.params import Body # Body is used to define the request body for a POST or PUT request. It allows us to specify the expected structure of the data that will be sent in the request body.
 from typing import Optional
-from random import randrange
-import time
-from . import models, schemas
+# from random import randrange
+from . import models
 from .utils import hash_pass
-from .database import Engine, get_db # . refers to the current directory
-from sqlalchemy.orm import Session
-
+from .database import Engine # . refers to the current directory
 from . routers import post,user
 from . routers import auth
+from .config import settings
 
+print(settings.database_password)
+
+models.Base.metadata.create_all(bind=Engine) # This is used to create the tables in the database. It will create all the tables that are defined in the models.py file. We will use this line of code to create the tables in the database when we run the application for the first time. After that, we can comment it out or remove it from the code.
 
 
 app=FastAPI()
@@ -27,21 +23,8 @@ app.include_router(post.router) # This line is used to include the post router i
 app.include_router(user.router)
 app.include_router(auth.router)
 
-models.Base.metadata.create_all(bind=Engine) # This is used to create the tables in the database. It will create all the tables that are defined in the models.py file. We will use this line of code to create the tables in the database when we run the application for the first time. After that, we can comment it out or remove it from the code.
 
-
-
-while True:
-    try:
-        conn= psycopg2.connect(host='localhost', database='fastapi', user='postgres',password='root@123',cursor_factory=RealDictCursor) # Cursor factory is used to specify the type of cursor that we want to use. In this case, we are using RealDictCursor which returns the query results as a list of dictionaries instead of tuples. This allows us to access the data using column names instead of index positions.
-        cursor=conn.cursor()
-        print("Database connection was successful")
-        break
-    except Exception as e:
-        print("Database connection failed")
-        print('Error:', e)
-        time.sleep(2) # This is used to wait for 2 seconds before trying to connect to db
-my_posts=[{'title':'title of post 1', 'content':'content of post 1', 'id':1},{'title':'My favourtie food','content':'I love biryani','id':2}]
+# Here the raw connection with sql was there we have moved it to database.py
 
 
 @app.get("/")
@@ -57,18 +40,6 @@ def test_db(db: Session = Depends(get_db)):
 """
 
 
-
-def find_post(id):
-    for p in my_posts:
-        if p['id']==id:
-            return p
-    return None
-
-def find_index_post(id):
-    for i, p in enumerate(my_posts):
-        if p['id']==id:
-            return i
-    return None
 
 
 

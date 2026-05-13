@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from pydantic import EmailStr
 from typing import Optional
+from pydantic.types import conint
 
 # The below code defines the Pydantic models for the Post entity. These models are used to validate and serialize the data for creating and updating posts in the API.
 class PostBase(BaseModel):
@@ -72,3 +73,9 @@ class TokenData(BaseModel):
     id: Optional[int]=None
     
 
+class Vote(BaseModel):
+    post_id:int
+    dir:conint(le=1)
+
+    class Config:
+        form_attributes=True

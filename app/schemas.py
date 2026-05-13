@@ -50,6 +50,13 @@ class Post(PostBase):
 
 
 
+class PostOut(BaseModel):
+    Post: Post
+    Votes: int
+
+    class Config:
+        form_attributes=True
+
 # Schema for the user entity
 class UserCreate(BaseModel):
     
@@ -65,6 +72,7 @@ class UserLogin(BaseModel):
     
 
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -77,5 +85,4 @@ class Vote(BaseModel):
     post_id:int
     dir:conint(le=1)
 
-    class Config:
-        form_attributes=True
+   

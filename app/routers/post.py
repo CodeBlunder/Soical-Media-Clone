@@ -17,21 +17,21 @@ router=APIRouter(
 # we will replace the app object with router object in all the endpoints defined in this file. This will allow us to use the router to define the endpoints and then include this router in the main.py file.
 
 
-#@router.get("/",response_model=List[schemas.Post])
-@router.get("/") 
+@router.get("/",response_model=List[schemas.PostOut])
+
 def get_posts(db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user),limit:int= 10,skip: int=0,search:Optional[str]=""):
     # cursor.execute("""SELECT * FROM posts """)
     # posts=cursor.fetchall()
     # print(posts)  
     print(limit)
-    posts=db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    # posts=db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     # Remember that in sqlalchemy by default the .join refers to left inner join.   so to make it outer we use isouter=True
 
-    result=db.query(models.Post,func.count(models.Vote.post_id).label("Votes")).join(models.Vote,models.Vote.post_id==models.Post.id, isouter=True).group_by(models.Post.id).all()
+    posts=db.query(models.Post,func.count(models.Vote.post_id).label("Votes")).join(models.Vote,models.Vote.post_id==models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
 
                                                    # We have used label to give a name to the count of votes, so that we can access it in the response.
 
-    return result
+    return posts
 
 @router.post("/")
 def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user)): # Here, we are defining the request body for the create_posts endpoint. The post parameter is of type schemas.PostCreate, which is a Pydantic model that defines the expected structure of the data that will be sent in the request body when creating a new post. By using this model, we can ensure that the data sent in the request body is valid and conforms to the expected format for creating a new post.

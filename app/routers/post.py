@@ -5,6 +5,7 @@ from ..database import get_db
 from typing import List
 from ..oauth2 import get_current_user
 from typing import Optional
+from sqlalchemy import func # It is basically used for SQL functions like COUNT, AVG, etc.
 
 # Now almost all the errors are handled
 # Right now the only error i.e we don't have the access to the app object so we are gonna use ROUTERS
@@ -16,14 +17,21 @@ router=APIRouter(
 # we will replace the app object with router object in all the endpoints defined in this file. This will allow us to use the router to define the endpoints and then include this router in the main.py file.
 
 
-@router.get("/",response_model=List[schemas.Post] )
+#@router.get("/",response_model=List[schemas.Post])
+@router.get("/") 
 def get_posts(db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user),limit:int= 10,skip: int=0,search:Optional[str]=""):
     # cursor.execute("""SELECT * FROM posts """)
     # posts=cursor.fetchall()
     # print(posts)  
     print(limit)
     posts=db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
-    return posts
+    # Remember that in sqlalchemy by default the .join refers to left inner join.   so to make it outer we use isouter=True
+
+    result=db.query(models.Post,func.count(models.Vote.post_id).label("Votes")).join(models.Vote,models.Vote.post_id==models.Post.id, isouter=True).group_by(models.Post.id).all()
+
+                                                   # We have used label to give a name to the count of votes, so that we can access it in the response.
+
+    return result
 
 @router.post("/")
 def create_posts(post: schemas.PostCreate,db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user)): # Here, we are defining the request body for the create_posts endpoint. The post parameter is of type schemas.PostCreate, which is a Pydantic model that defines the expected structure of the data that will be sent in the request body when creating a new post. By using this model, we can ensure that the data sent in the request body is valid and conforms to the expected format for creating a new post.
@@ -68,7 +76,7 @@ def get_post(id: int,db: Session = Depends(get_db),current_user:int=Depends(oaut
     # post=cursor.fetchone()
     post=db.query(models.Post).filter(models.Post.id==id).first() # this line is used to retrieve a specific post from the database based on its ID. The filter() method is used to specify the condition for filtering the posts, in this case, we are filtering the posts where the id column matches the provided id parameter. The first() method is used to retrieve the first result that matches the filter condition
 
-  
+    
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found")
@@ -115,6 +123,7 @@ def update_post(id:int,post:schemas.PostCreate,db: Session = Depends(get_db),cur
     # updated_post=cursor.fetchone()
     # conn.commit()
     updated_post=db.query(models.Post).filter(models.Post.id==id).update(post.dict(),synchronize_session=False) # Here, we are updating the post in the database with the new data provided in the request body. The post.dict() method is used to convert the Pydantic model instance into a dictionary format that can be used for updating the database record. The synchronize_session=False parameter is used to avoid unnecessary overhead of synchronizing the session when we are only updating a single post. If we were updating multiple posts, we would set it to True to ensure that the session is properly synchronized with the database after the update operation.
+
     # post_to_update=updated_post.first() # This line is used to retrieve the first post that matches the filter condition, which is the post with the specified id. We need to do this because the update operation will be performed on this specific post, and we want to ensure that we are updating the correct post in the database. If there is no post with the specified id, then post_to_update will be None, and we can handle that case accordingly.
     
     if updated_post==0:

@@ -70,13 +70,13 @@ def rating_post(rating: schemas.PostCreate):
 
 
 # Next endpoint for retrieving a specific post by its ID
-@router.get("/{id}",response_model=schemas.Post)
+@router.get("/{id}",response_model=schemas.PostOut)
 def get_post(id: int,db: Session = Depends(get_db),current_user:int=Depends(oauth2.get_current_user)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s """,(str(id)))
     # post=cursor.fetchone()
-    post=db.query(models.Post).filter(models.Post.id==id).first() # this line is used to retrieve a specific post from the database based on its ID. The filter() method is used to specify the condition for filtering the posts, in this case, we are filtering the posts where the id column matches the provided id parameter. The first() method is used to retrieve the first result that matches the filter condition
+    # post=db.query(models.Post).filter(models.Post.id==id).first() # this line is used to retrieve a specific post from the database based on its ID. The filter() method is used to specify the condition for filtering the posts, in this case, we are filtering the posts where the id column matches the provided id parameter. The first() method is used to retrieve the first result that matches the filter condition
 
-    
+    post=db.query(models.Post,func.count(models.Vote.post_id).label("Votes")).join(models.Vote,models.Vote.post_id==models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.id==id).first() # This line is used to retrieve a specific post from the database based on its ID, along with the count of votes for that post. The join() method is used to perform a left outer join between the Post and Vote tables, allowing us to include posts that have no votes. The group_by() method is used to group the results by the post ID, which allows us to count the number of votes for each post using the func.count() function. The filter() method is used to specify the condition for filtering the posts, in this case, we are filtering the posts where the id column matches the provided id parameter. The first() method is used to retrieve the first result that matches the filter condition.
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} was not found")
